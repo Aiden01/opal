@@ -20,12 +20,13 @@ import           Data.Functor                   ( ($>) )
 
 lString, lInt, lFloat, lChar :: Parser Lit
 lString = LString <$> stringLiteral
+lBool = (keyword "true" $> LBool True) <|> (keyword "false" $> LBool False)
 lInt = LInt <$> integerLiteral
 lFloat = LFloat <$> floatLiteral
 lChar = LChar <$> charLiteral
 
 lit :: Parser Lit
-lit = lChar <|> try lFloat <|> lString <|> lInt
+lit = lChar <|> try lFloat <|> lString <|> lInt <|> lBool
 
 eLiteral :: Parser Expr
 eLiteral = ELit <$> lit

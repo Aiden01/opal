@@ -41,7 +41,18 @@ symbol = MegaL.symbol space
 
 keywords :: S.Set String
 keywords = S.fromList
-  ["func", "if", "let", "then", "else", "String", "Int", "Float", "Char"]
+  [ "func"
+  , "if"
+  , "let"
+  , "then"
+  , "else"
+  , "String"
+  , "Int"
+  , "Float"
+  , "Char"
+  , "true"
+  , "false"
+  ]
 
 keyword :: String -> Parser ()
 keyword w =
