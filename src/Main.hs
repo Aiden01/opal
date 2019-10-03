@@ -1,7 +1,14 @@
 module Main where
 
-import           Opal.Parsing.Types
-import           Opal.Parsing.Lexer
+import           Text.Megaparsec
+import           Text.Megaparsec.Error
+import           Opal.Parsing.Parser
+import           System.Environment             ( getArgs )
+
+parseProgram :: String -> IO ()
+parseProgram buffer = case parse (program <* eof) "" buffer of
+  Left  e   -> putStrLn (errorBundlePretty e)
+  Right ast -> print ast
 
 main :: IO ()
-main = putStrLn "Hello, Haskell!"
+main = getArgs >>= readFile . head >>= parseProgram

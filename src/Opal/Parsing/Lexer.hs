@@ -3,6 +3,7 @@ module Opal.Parsing.Lexer
   , space
   , symbol
   , keywords
+  , operator
   , keyword
   , identifier
   , char
@@ -38,6 +39,28 @@ skipBlockComment = MegaL.skipBlockComment "/*" "*/"
 
 symbol :: String -> Parser String
 symbol = MegaL.symbol space
+
+operator :: String -> Parser String
+operator op | op `S.member` operators = lexeme $ MegaC.string op
+            | otherwise               = fail $ "Unknown operator " ++ op
+ where
+  operators = S.fromList
+    [ "+"
+    , "-"
+    , "*"
+    , "/"
+    , "&&"
+    , "||"
+    , "^"
+    , "<"
+    , "++"
+    , "."
+    , "at"
+    , "not"
+    , "=="
+    , "!="
+    , ">"
+    ]
 
 keywords :: S.Set String
 keywords = S.fromList

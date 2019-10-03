@@ -7,6 +7,8 @@ module Opal.Parsing.AST
   , Block
   , Param(..)
   , Type(..)
+  , BinOP(..)
+  , UnOP(..)
   , Name
   )
 where
@@ -29,7 +31,12 @@ data BinOP
   | BGTE
   | BLT
   | BLTE
-  | BNotEQ deriving (Show)
+  | BNotEQ
+  | BDiv
+  | BMult
+  | BAdd
+  | BSub
+  | BPow deriving (Show)
 
 data UnOP
   = UNot

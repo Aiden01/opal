@@ -1,6 +1,5 @@
 module Opal.Parsing.Parser
   ( program
-  , parseProgram
   )
 where
 
@@ -14,9 +13,8 @@ import           Text.Megaparsec                ( parse
                                                 , try
                                                 , optional
                                                 )
-import           Text.Megaparsec.Error
-import           Debug.Trace
 import           Data.Functor                   ( ($>) )
+import           Control.Monad.Combinators.Expr
 
 lString, lInt, lFloat, lChar :: Parser Lit
 lString = LString <$> stringLiteral
@@ -81,9 +79,41 @@ eIf = do
   e3 <- expr
   pure (EIf e1 e2 e3)
 
+-- operators
+binOP :: String -> BinOP -> Parser (Expr -> Expr -> Expr)
+binOP xs op = operator xs $> EBinOP op
+
+unOP :: String -> UnOP -> Parser (Expr -> Expr)
+unOP xs op = operator xs $> EUnOP op
+
+opTable =
+  [ [InfixL (binOP "&&" BAnd)]
+  , [InfixL (binOP "||" BOR)]
+  , [InfixL (binOP "==" BEQ)]
+  , [InfixL (binOP "!=" BNotEQ)]
+  , [InfixL (binOP ">" BGT)]
+  , [InfixL (binOP ">=" BGTE)]
+  , [InfixL (binOP "<" BLT)]
+  , [InfixL (binOP "=<" BLTE)]
+  , [InfixL (binOP "**" BPow)]
+  , [InfixL (binOP "/" BDiv)]
+  , [InfixL (binOP "*" BMult)]
+  , [InfixL (binOP "+" BAdd)]
+  , [InfixL (binOP "-" BSub)]
+  -- unary operators
+  , [Prefix (unOP "!" UNot)]
+  , [Postfix (unOP "++" UInc)]
+  , [Postfix (unOP "--" UInc)]
+  ]
+
+
 expr :: Parser Expr
-expr =
-  parens expr <|> eLiteral <|> eList <|> try eCall <|> eIf <|> eVar <|> eLam
+expr = makeExprParser term opTable
+ where
+  term =
+    parens expr <|> eLiteral <|> eList <|> try eCall <|> eIf <|> eVar <|> eLam
+
+-- statements
 
 program :: Parser Program
 program = Program <$> (lexeme space *> many fnDecl)
@@ -114,10 +144,3 @@ varDecl = do
   symbol "="
   e <- expr
   pure (VarDeclStmt name t e)
-
-
-
-parseProgram :: String -> IO ()
-parseProgram buffer = case parse (program <* eof) "" buffer of
-  Left  e   -> putStrLn (errorBundlePretty e)
-  Right ast -> print ast
