@@ -13,7 +13,9 @@ module Opal.Parsing.AST
   )
 where
 
-type Name = String
+import           Opal.Common
+import           Data.List                      ( intercalate )
+
 type Block = [Stmt]
 
 data Lit
@@ -63,11 +65,22 @@ data Type
   = TInt
   | TFloat
   | TString
+  | TBool
   | TChar
   | TVar Name
-  | TList [Type]
+  | TList Type
   | TFn Type [Type] -- return type and params type
-  deriving (Show)
+  deriving Eq
+
+instance Show Type where
+  show TInt      = "Int"
+  show TFloat    = "Float"
+  show TString   = "String"
+  show TChar     = "Char"
+  show (TVar  x) = x
+  show (TList t) = show t
+  show (TFn ret params) =
+    intercalate " -> " (map show params) <> " -> " <> show ret
 
 newtype Param = Param (Name, Type) deriving (Show)
 

@@ -48,7 +48,7 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 
-executable lispy
+executable opal
   -- .hs or .lhs file containing the Main module.
   main-is:             Main.hs
 
@@ -57,17 +57,21 @@ executable lispy
                    , Opal.Parsing.Parser
                    , Opal.Parsing.Lexer
                    , Opal.Parsing.AST
+                   , Opal.Typing.TypeChecker
+                   , Opal.Typing.Types
+                   , Opal.Common
 
   -- LANGUAGE extensions used by modules in this package.
-  -- other-extensions:
+  default-extensions: LambdaCase, MultiParamTypeClasses
 
   -- Other library packages from which modules are imported.
   build-depends:       base >=4.12 && <4.13
                      , megaparsec
-                     , free
                      , containers
-                     , ansi-wl-pprint
-
+                     , parser-combinators
+                     , mtl
+                     , lens
+                                          
   -- Directories containing source files.
   hs-source-dirs:      src
 
