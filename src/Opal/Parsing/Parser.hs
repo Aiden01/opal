@@ -122,7 +122,7 @@ block :: Parser Block
 block = braces $ many (stmt <* semi)
 
 stmt :: Parser Stmt
-stmt = FnDeclStmt <$> fnDecl <|> exprStmt <|> varDecl
+stmt = FnDeclStmt <$> fnDecl <|> exprStmt <|> varDecl <|> whenStmt <|> retStmt
 
 exprStmt :: Parser Stmt
 exprStmt = ExprStmt <$> expr
@@ -132,9 +132,10 @@ fnDecl = do
   keyword "func"
   name <- identifier
   args <- parens (commaSep param)
+  ret  <- colon *> typeAnn
   symbol "="
   body <- try expr <|> EBlock <$> block
-  pure (FnDecl name args body)
+  pure (FnDecl name args ret body)
 
 varDecl :: Parser Stmt
 varDecl = do
@@ -144,3 +145,14 @@ varDecl = do
   symbol "="
   e <- expr
   pure (VarDeclStmt name t e)
+
+whenStmt :: Parser Stmt
+whenStmt = do
+  keyword "when"
+  cond <- parens expr
+  symbol "="
+  body <- try expr <|> EBlock <$> block
+  pure (WhenStmt cond body)
+
+retStmt :: Parser Stmt
+retStmt = RetStmt <$> (keyword "return" *> expr)

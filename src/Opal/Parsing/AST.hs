@@ -59,6 +59,8 @@ data Expr
 data Stmt
   = ExprStmt Expr
   | VarDeclStmt Name (Maybe Type) Expr
+  | WhenStmt Expr Expr
+  | RetStmt Expr
   | FnDeclStmt FnDecl deriving (Show)
 
 data Type
@@ -69,6 +71,7 @@ data Type
   | TChar
   | TVar Name
   | TList Type
+  | TTup [Type]
   | TFn Type [Type] -- return type and params type
   deriving Eq
 
@@ -84,5 +87,5 @@ instance Show Type where
 
 newtype Param = Param (Name, Type) deriving (Show)
 
-data FnDecl = FnDecl Name [Param] Expr deriving (Show)
+data FnDecl = FnDecl Name [Param] Type Expr deriving (Show)
 newtype Program = Program [FnDecl] deriving (Show)

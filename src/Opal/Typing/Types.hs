@@ -16,7 +16,7 @@ import           Opal.Common
 import           Control.Monad.Except           ( ExceptT )
 
 data TypeCheckEnv = TypeCheckEnv
-  { _tExpected :: Type
+  { _tExpected   :: Maybe Type
   , _locals      :: Scope Type
   }
 makeLenses ''TypeCheckEnv

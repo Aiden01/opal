@@ -75,6 +75,8 @@ keywords = S.fromList
   , "Char"
   , "true"
   , "false"
+  , "when"
+  , "return"
   ]
 
 keyword :: String -> Parser ()
