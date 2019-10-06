@@ -1,4 +1,6 @@
+func f() = "xx"
+func g(x: String) = "hi"
+
 func main() = {
-     let f = \(x: Int) -> x + 2;
-     print(f(2));
+   g(f());
 }

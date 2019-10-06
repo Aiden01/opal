@@ -116,7 +116,7 @@ expr = makeExprParser term opTable
 -- statements
 
 program :: Parser Program
-program = Program <$> (lexeme space *> many fnDecl)
+program = Program <$> (lexeme space *> many (lexeme fnDecl))
 
 block :: Parser Block
 block = braces $ many (stmt <* semi)
@@ -132,7 +132,7 @@ fnDecl = do
   keyword "func"
   name <- identifier
   args <- parens (commaSep param)
-  ret  <- colon *> typeAnn
+  ret  <- optional (colon *> typeAnn)
   symbol "="
   body <- try expr <|> EBlock <$> block
   pure (FnDecl name args ret body)

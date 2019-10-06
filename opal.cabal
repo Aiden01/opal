@@ -59,7 +59,9 @@ executable opal
                    , Opal.Parsing.AST
                    , Opal.Typing.TypeChecker
                    , Opal.Typing.Types
+                   , Opal.Typing.Inference
                    , Opal.Common
+                   , Opal.Codegen
 
   -- LANGUAGE extensions used by modules in this package.
   default-extensions: LambdaCase, MultiParamTypeClasses
@@ -71,6 +73,9 @@ executable opal
                      , parser-combinators
                      , mtl
                      , lens
+                     , llvm-hs <= 8.0.0
+                     , llvm-hs-pure <= 8.0.0
+                     , bytestring
                                           
   -- Directories containing source files.
   hs-source-dirs:      src

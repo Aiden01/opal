@@ -87,5 +87,5 @@ instance Show Type where
 
 newtype Param = Param (Name, Type) deriving (Show)
 
-data FnDecl = FnDecl Name [Param] Type Expr deriving (Show)
+data FnDecl = FnDecl Name [Param] (Maybe Type) Expr deriving (Show)
 newtype Program = Program [FnDecl] deriving (Show)
