@@ -20,7 +20,10 @@ import           Control.Monad.Reader           ( asks
                                                 , local
                                                 , runReaderT
                                                 )
-import           Data.Maybe                     ( fromMaybe, isNothing )
+import           Data.Maybe                     ( fromMaybe
+                                                , isNothing
+                                                , fromJust
+                                                )
 import           Opal.Typing.Inference
 import qualified Data.Map                      as M
 
@@ -112,40 +115,38 @@ instance Checkable Expr Type where
   getType (EVar   name ) = getLocal name
 
 -- Block expr
-  getType (EBlock stmts) = statements stmts
+  getType (EBlock stmts) = statements stmts $> emptyTup
 
 emptyTup :: Type
 emptyTup = TTup []
 
-statements :: [Stmt] -> TypeCheck Type
-statements [] = pure emptyTup
-statements stmts =
-  snd
-    <$> foldM (\(f, t) i -> (\(a, b) -> (f . a, b)) <$> local f (getType i))
-              (id, emptyTup)
-              stmts
+statements :: [Stmt] -> TypeCheck ()
+statements []             = pure ()
+statements (stmt : stmts) = do
+  f <- getType stmt
+  local f (statements stmts)
 
 
-instance Checkable Stmt (TypeCheckEnv -> TypeCheckEnv, Type) where
-  getType (ExprStmt expr          ) = getType expr $> (id, emptyTup)
-  getType (RetStmt expr) = asks (view tExpected) >>= \case
+instance Checkable Stmt (TypeCheckEnv -> TypeCheckEnv) where
+  getType (ExprStmt expr) = getType expr $> id
+  getType (RetStmt  expr) = asks (view tExpected) >>= \case
     Nothing -> throwError (Custom "Illegal return statement")
     Just t1 -> do
-      t2 <- getType expr
+      t2     <- getType expr
       substs <- unify t1 t2
       let newT1 = apply substs t1
-      pure (tExpected ?~ newT1, emptyTup)
+      pure (tExpected ?~ newT1)
   getType (VarDeclStmt name t expr) = do
     tvar <- newTyVar "a"
     let t' = fromMaybe tvar t
     exprT <- local (supply +~ 1) (getType expr)
     subst <- unify t' exprT
     let newT = apply subst t'
-    pure (locals %~ add name newT, emptyTup)
+    pure (locals %~ add name newT)
   getType (WhenStmt cond expr) = do
     condT <- getType cond
     expect TBool condT
-    getType expr $> (id, emptyTup)
+    getType expr $> id
   getType (FnDeclStmt (FnDecl name params [] ret expr)) = do
 -- Create a new type variable
     tVar <- newTyVar "a"
@@ -155,16 +156,19 @@ instance Checkable Stmt (TypeCheckEnv -> TypeCheckEnv, Type) where
     -- Function's type
     let fnType = TFn retType paramTypes
     -- Type check the returned expression
-    newTExpected <- newTyVar "b"
-    t     <- case expr of
-      EBlock _ | isNothing ret -> throwError (Custom "Cannot infer return type, consider adding a type annotation")
-      _ -> getType expr
+    let newTExpected = retType
+    let newEnv = (locals %~ add name fnType) . (tExpected ?~ newTExpected)
+    t            <- case expr of
+      EBlock _ | isNothing ret -> throwError
+        (Custom "Cannot infer return type, consider adding a type annotation")
+      EBlock stmts -> local newEnv (statements stmts) $> retType
+      _            -> local newEnv (getType expr)
     -- Unify t with the return type
     subst <- unify retType t
     -- Substitute the return type
     let newRetType = apply subst retType
     -- Set the new return type
-    pure (locals %~ add name (TFn newRetType paramTypes), emptyTup)
+    pure (locals %~ add name (TFn newRetType paramTypes))
 
 instance Checkable Program () where
   getType (Program fns) = statements (map FnDeclStmt fns) $> ()
