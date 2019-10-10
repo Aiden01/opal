@@ -15,6 +15,7 @@ import           Text.Megaparsec                ( parse
                                                 )
 import           Data.Functor                   ( ($>) )
 import           Control.Monad.Combinators.Expr
+import           Data.Maybe                     ( fromMaybe )
 
 lString, lInt, lFloat, lChar :: Parser Lit
 lString = LString <$> stringLiteral
@@ -62,6 +63,8 @@ typeAnn =
     $>  TChar
     <|> TVar
     <$> identifier
+    <|> TTup
+    <$> parens (commaSep typeAnn)
 
 eCall :: Parser Expr
 eCall = do
@@ -130,12 +133,13 @@ exprStmt = ExprStmt <$> expr
 fnDecl :: Parser FnDecl
 fnDecl = do
   keyword "func"
-  name <- identifier
-  args <- parens (commaSep param)
-  ret  <- optional (colon *> typeAnn)
+  name     <- identifier
+  typevars <- fromMaybe [] <$> optional (angle (commaSep identifier))
+  args     <- parens (commaSep param)
+  ret      <- optional (colon *> typeAnn)
   symbol "="
   body <- try expr <|> EBlock <$> block
-  pure (FnDecl name args ret body)
+  pure (FnDecl name args typevars ret body)
 
 varDecl :: Parser Stmt
 varDecl = do

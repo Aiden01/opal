@@ -20,7 +20,7 @@ import           Control.Monad.Reader           ( asks
                                                 , local
                                                 , runReaderT
                                                 )
-import           Data.Maybe                     ( fromMaybe )
+import           Data.Maybe                     ( fromMaybe, isNothing )
 import           Opal.Typing.Inference
 import qualified Data.Map                      as M
 
@@ -128,6 +128,13 @@ statements stmts =
 
 instance Checkable Stmt (TypeCheckEnv -> TypeCheckEnv, Type) where
   getType (ExprStmt expr          ) = getType expr $> (id, emptyTup)
+  getType (RetStmt expr) = asks (view tExpected) >>= \case
+    Nothing -> throwError (Custom "Illegal return statement")
+    Just t1 -> do
+      t2 <- getType expr
+      substs <- unify t1 t2
+      let newT1 = apply substs t1
+      pure (tExpected ?~ newT1, emptyTup)
   getType (VarDeclStmt name t expr) = do
     tvar <- newTyVar "a"
     let t' = fromMaybe tvar t
@@ -139,7 +146,7 @@ instance Checkable Stmt (TypeCheckEnv -> TypeCheckEnv, Type) where
     condT <- getType cond
     expect TBool condT
     getType expr $> (id, emptyTup)
-  getType (FnDeclStmt (FnDecl name params ret expr)) = do
+  getType (FnDeclStmt (FnDecl name params [] ret expr)) = do
 -- Create a new type variable
     tVar <- newTyVar "a"
     let retType = fromMaybe tVar ret
@@ -148,7 +155,10 @@ instance Checkable Stmt (TypeCheckEnv -> TypeCheckEnv, Type) where
     -- Function's type
     let fnType = TFn retType paramTypes
     -- Type check the returned expression
-    t     <- local ((locals %~ add name fnType) . (supply +~ 1)) (getType expr)
+    newTExpected <- newTyVar "b"
+    t     <- case expr of
+      EBlock _ | isNothing ret -> throwError (Custom "Cannot infer return type, consider adding a type annotation")
+      _ -> getType expr
     -- Unify t with the return type
     subst <- unify retType t
     -- Substitute the return type

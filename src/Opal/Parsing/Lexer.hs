@@ -1,5 +1,6 @@
 module Opal.Parsing.Lexer
   ( lexeme
+  , angle
   , space
   , symbol
   , keywords
@@ -97,13 +98,14 @@ identifier = (lexeme . Mega.try) (p >>= check)
 char :: Char -> Parser Char
 char = lexeme . MegaC.char
 
-parens, braces, brackets :: Parser a -> Parser a
+parens, braces, brackets, angle :: Parser a -> Parser a
 -- Parses what's inside the parentheses
 parens = Mega.between (char '(') (char ')')
 -- Parses what's inside braces
 braces = Mega.between (char '{') (char '}')
 -- Parses what's inside brackets
 brackets = Mega.between (char '[') (char ']')
+angle = Mega.between (char '<') (char '>')
 
 commaSep :: Parser a -> Parser [a]
 commaSep p = Mega.sepBy p (symbol ",")

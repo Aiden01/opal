@@ -21,7 +21,7 @@ data TypeCheckEnv = TypeCheckEnv
   { _tExpected   :: Maybe Type
   , _locals      :: Scope Type
   , _subst       :: Scope Type
-  , _supply      :: Int  
+  , _supply      :: Int
   }
 makeLenses ''TypeCheckEnv
 

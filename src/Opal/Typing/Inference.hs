@@ -67,6 +67,7 @@ unify TInt      TInt      = pure M.empty
 unify TBool     TBool     = pure M.empty
 unify TString   TString   = pure M.empty
 unify TChar     TChar     = pure M.empty
+unify (TTup t1) (TTup t2) = unifyList M.empty t1 t2
 unify (TList a) (TList b) = unify a b
 unify t1        t2        = throwError (Mismatch t1 t2)
 
